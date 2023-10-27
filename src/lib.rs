@@ -101,6 +101,11 @@ where
             }
         }
 
+        // If we are still in a different run, call the diff function
+        if let DiffState::Different(run_start) = run_state {
+            func(run_start, &other[run_start..])?;
+        }
+
         Ok(())
     }
 }
@@ -120,10 +125,14 @@ mod tests {
     fn test_fully_different() {
         let a = [0u8; 40];
         let b = [1u8; 40];
+
+        let mut called = false;
         a.diff_in_place(&b, |idx, diff| {
             assert_eq!(idx, 0);
-            assert_eq!(diff, &[1u8]);
+            assert_eq!(diff, &[1u8; 40]);
+            called = true;
         });
+        assert!(called);
     }
 
     #[test]
@@ -135,11 +144,14 @@ mod tests {
 
         const EXPECTED_CALLS: [(usize, &[u8]); 1] = [(0usize, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])];
 
+        let mut called = false;
         a.diff_in_place(&b, |idx, diff| {
             let (expected_idx, expected_diff) = EXPECTED_CALLS[0];
             assert_eq!(idx, expected_idx);
             assert_eq!(diff, expected_diff);
+            called = true;
         });
+        assert!(called);
     }
 
     #[test]
@@ -151,11 +163,14 @@ mod tests {
 
         const EXPECTED_CALLS: [(usize, &[u8]); 1] = [(10usize, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])];
 
+        let mut called = false;
         a.diff_in_place(&b, |idx, diff| {
             let (expected_idx, expected_diff) = EXPECTED_CALLS[0];
             assert_eq!(idx, expected_idx);
             assert_eq!(diff, expected_diff);
-        })
+            called = true;
+        });
+        assert!(called);
     }
 
     #[test]
@@ -167,11 +182,14 @@ mod tests {
 
         const EXPECTED_CALLS: [(usize, &[u8]); 1] = [(30usize, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])];
 
+        let mut called = false;
         a.diff_in_place(&b, |idx, diff| {
             let (expected_idx, expected_diff) = EXPECTED_CALLS[0];
             assert_eq!(idx, expected_idx);
             assert_eq!(diff, expected_diff);
-        })
+            called = true;
+        });
+        assert!(called);
     }
 
     #[test]
@@ -190,12 +208,15 @@ mod tests {
         ];
 
         let mut call_idx = 0;
+        let mut called = false;
         a.diff_in_place(&b, |idx, diff| {
             let (expected_idx, expected_diff) = EXPECTED_CALLS[call_idx];
             assert_eq!(idx, expected_idx);
             assert_eq!(diff, expected_diff);
             call_idx += 1;
-        })
+            called = true;
+        });
+        assert!(called);
     }
 
     #[test]
@@ -208,11 +229,14 @@ mod tests {
         const EXPECTED_CALLS: [(usize, &[f32]); 1] =
             [(0usize, &[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7., 8., 9., 10.])];
 
+        let mut called = false;
         a.diff_in_place(&b, |idx, diff| {
             let (expected_idx, expected_diff) = EXPECTED_CALLS[0];
             assert_eq!(idx, expected_idx);
             assert_eq!(diff, expected_diff);
+            called = true;
         });
+        assert!(called);
     }
 
     #[test]
