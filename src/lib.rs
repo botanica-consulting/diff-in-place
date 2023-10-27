@@ -18,16 +18,28 @@ where
     ///     let a = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     ///     let mut b = [0, 0, 1, 2, 0, 0, 0, 3, 4, 5];
     ///
-    ///     a.diff_in_place(&b, |idx, diff| {
+    ///     a.try_diff_in_place(&b, |idx, diff| -> Result<(), ()> {
     ///         // println!("{}: {:?}", idx, diff);
     ///         // Prints:
     ///         // 2: [1, 2]
     ///         // 7: [3, 4, 5]
-    ///     });
+    ///         Ok(())
+    ///     }).unwrap();
     /// ```
-    fn diff_in_place<F>(&self, other: &[T; N], func: F)
+    fn try_diff_in_place<F, R>(&self, other: &[T; N], func: F) -> Result<(), R>
     where
-        F: FnMut(usize, &[T]);
+        F: FnMut(usize, &[T]) -> Result<(), R>;
+
+    fn diff_in_place<F>(&self, other: &[T; N], mut func: F)
+    where
+        F: FnMut(usize, &[T]),
+    {
+        self.try_diff_in_place(other, |idx, diff| -> Result<(), ()> {
+            func(idx, diff);
+            Ok(())
+        })
+        .unwrap();
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -40,9 +52,9 @@ impl<T, const N: usize> DiffInPlace<T, N> for [T; N]
 where
     T: PartialEq + Copy,
 {
-    fn diff_in_place<F>(&self, other: &[T; N], mut func: F)
+    fn try_diff_in_place<F, R>(&self, other: &[T; N], mut func: F) -> Result<(), R>
     where
-        F: FnMut(usize, &[T]),
+        F: FnMut(usize, &[T]) -> Result<(), R>,
     {
         // Go over the bytes in both arrays, comparing them.
         // For all different runs within the two buffers, call the diff function
@@ -57,7 +69,7 @@ where
                 }
                 (DiffState::Different(run_start), true) => {
                     // We are ending an unequal run, call the diff function
-                    func(run_start, &other[run_start..current]);
+                    func(run_start, &other[run_start..current])?;
                     run_state = DiffState::Same;
                 }
                 _ => {
@@ -65,6 +77,8 @@ where
                 }
             }
         }
+
+        Ok(())
     }
 }
 
@@ -76,7 +90,7 @@ mod tests {
     fn test_fully_same() {
         let a = [0u8; 40];
         let b = [0u8; 40];
-        a.diff_in_place(&b, |_, _| panic!("Should not be called"));
+        a.diff_in_place(&b, |_, _| panic!("Should not be called"))
     }
 
     #[test]
@@ -118,7 +132,7 @@ mod tests {
             let (expected_idx, expected_diff) = EXPECTED_CALLS[0];
             assert_eq!(idx, expected_idx);
             assert_eq!(diff, expected_diff);
-        });
+        })
     }
 
     #[test]
@@ -134,7 +148,7 @@ mod tests {
             let (expected_idx, expected_diff) = EXPECTED_CALLS[0];
             assert_eq!(idx, expected_idx);
             assert_eq!(diff, expected_diff);
-        });
+        })
     }
 
     #[test]
@@ -158,7 +172,7 @@ mod tests {
             assert_eq!(idx, expected_idx);
             assert_eq!(diff, expected_diff);
             call_idx += 1;
-        });
+        })
     }
 
     #[test]
@@ -177,5 +191,16 @@ mod tests {
             assert_eq!(diff, expected_diff);
         });
     }
-}
 
+    #[test]
+    #[should_panic]
+    fn test_fallible_diff() {
+        let a = [0u8; 40];
+        let mut b = [0u8; 40];
+
+        b[..10].copy_from_slice(&[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+        a.try_diff_in_place(&b, |_idx, _diff| -> Result<(), ()> { Err(()) })
+            .unwrap();
+    }
+}
