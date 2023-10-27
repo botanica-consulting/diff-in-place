@@ -4,9 +4,11 @@ pub trait DiffInPlace<T, const N: usize>
 where
     T: PartialEq,
 {
+    /// Fallible version of `diff_in_place` for propagating errors.
     /// Perform an in-place diff between two const-size arrays, invoking the given function
     /// for each run of different elements, with the index into the array and
     /// the slice of different elements from the other array.
+    ///
     ///
     /// # Arguments
     /// * `other`   - The other array to compare against.
@@ -30,6 +32,27 @@ where
     where
         F: FnMut(usize, &[T]) -> Result<(), R>;
 
+    /// Perform an in-place diff between two const-size arrays, invoking the given function
+    /// for each run of different elements, with the index into the array and
+    /// the slice of different elements from the other array.
+    ///
+    /// # Arguments
+    /// * `other`   - The other array to compare against.
+    /// * `func`    - The function to call for each run of different elements.
+    ///
+    /// # Example
+    /// ```
+    ///     use diff_in_place::DiffInPlace;
+    ///     let a = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    ///     let mut b = [0, 0, 1, 2, 0, 0, 0, 3, 4, 5];
+    ///
+    ///     a.diff_in_place(&b, |idx, diff| {
+    ///         // println!("{}: {:?}", idx, diff);
+    ///         // Prints:
+    ///         // 2: [1, 2]
+    ///         // 7: [3, 4, 5]
+    ///     });
+    /// ```
     fn diff_in_place<F>(&self, other: &[T; N], mut func: F)
     where
         F: FnMut(usize, &[T]),
