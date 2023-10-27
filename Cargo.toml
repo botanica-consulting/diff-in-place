@@ -1,0 +1,14 @@
+[package]
+name = "diff-in-place"
+description = "A no_std, zero-copy, in-place diff trait for constant sized arrays"
+version = "0.1.0"
+authors = ["0xa10", "botanica-consulting"]
+edition = "2021"
+repository = "https://github.com/botanica-consulting/diff-in-place"
+license-file = "LICENSE"
+keywords = ["no-std", "embedded"]
+categories = ["embedded"]
+readme = "README.md"
+
+
+
