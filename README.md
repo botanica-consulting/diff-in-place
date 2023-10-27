@@ -1,3 +1,4 @@
+![crates.io](https://img.shields.io/crates/v/diff-in-place)
 # diff-in-place
 A lightweight, Rust idiomatic trait for comparing two constant size arrays in-place and with no copies.
 Each non-equal run inside the two arrays results in the callback being invoked with the starting index and the different bytes.
@@ -8,6 +9,8 @@ This crate is suitable for usage in `no_std` targets.
 
 # Example
 ```rust
+use diff_in_place::DiffInPlace;
+
 // In this scenario you want to update the state on the chip without sending all 7 bytes
 let state_on_chip = [0, 0, 1, 1, 1, 1, 1];
 let mut new_state = state.clone()
