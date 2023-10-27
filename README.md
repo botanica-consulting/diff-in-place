@@ -1,4 +1,3 @@
-![crates.io](https://img.shields.io/crates/v/diff-in-place)
 # diff-in-place
 A lightweight, Rust idiomatic trait for comparing two constant size arrays in-place and with no copies.
 Each non-equal run inside the two arrays results in the callback being invoked with the starting index and the different bytes.
